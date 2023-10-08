@@ -15,6 +15,8 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {INameWrapper} from "../wrapper/INameWrapper.sol";
 import {ERC20Recoverable} from "../utils/ERC20Recoverable.sol";
 
+import "../H1NativeApplication.sol";
+
 error CommitmentTooNew(bytes32 commitment);
 error CommitmentTooOld(bytes32 commitment);
 error NameNotAvailable(string name);
@@ -34,7 +36,8 @@ contract ETHRegistrarController is
     IETHRegistrarController,
     IERC165,
     ERC20Recoverable,
-    ReverseClaimer
+    ReverseClaimer,
+    H1NativeApplication
 {
     using StringUtils for *;
     using Address for address;
@@ -75,7 +78,7 @@ contract ETHRegistrarController is
         ReverseRegistrar _reverseRegistrar,
         INameWrapper _nameWrapper,
         ENS _ens
-    ) ReverseClaimer(_ens, msg.sender) {
+    ) ReverseClaimer(_ens, msg.sender) H1NativeApplication(address(_prices)) {
         if (_maxCommitmentAge <= _minCommitmentAge) {
             revert MaxCommitmentAgeTooLow();
         }
@@ -154,9 +157,9 @@ contract ETHRegistrarController is
         bytes[] calldata data,
         bool reverseRecord,
         uint16 ownerControlledFuses
-    ) public payable override {
+    ) public payable override applicationFeeWithPayableFunction {
         IPriceOracle.Price memory price = rentPrice(name, duration);
-        if (msg.value < price.base + price.premium) {
+        if (msgValueAfterFee < price.base + price.premium) {
             revert InsufficientValue();
         }
 
@@ -200,9 +203,9 @@ contract ETHRegistrarController is
             expires
         );
 
-        if (msg.value > (price.base + price.premium)) {
+        if (msgValueAfterFee > (price.base + price.premium)) {
             payable(msg.sender).transfer(
-                msg.value - (price.base + price.premium)
+                msgValueAfterFee - (price.base + price.premium)
             );
         }
     }
@@ -210,20 +213,20 @@ contract ETHRegistrarController is
     function renew(
         string calldata name,
         uint256 duration
-    ) external payable override {
+    ) external payable override applicationFeeWithPayableFunction {
         bytes32 labelhash = keccak256(bytes(name));
         uint256 tokenId = uint256(labelhash);
         IPriceOracle.Price memory price = rentPrice(name, duration);
-        if (msg.value < price.base) {
+        if (msgValueAfterFee < price.base) {
             revert InsufficientValue();
         }
         uint256 expires = nameWrapper.renew(tokenId, duration);
 
-        if (msg.value > price.base) {
-            payable(msg.sender).transfer(msg.value - price.base);
+        if (msgValueAfterFee > price.base) {
+            payable(msg.sender).transfer(msgValueAfterFee - price.base);
         }
 
-        emit NameRenewed(name, labelhash, msg.value, expires);
+        emit NameRenewed(name, labelhash, msgValueAfterFee, expires);
     }
 
     function withdraw() public {

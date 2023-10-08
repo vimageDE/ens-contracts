@@ -5,6 +5,7 @@ interface IPriceOracle {
     struct Price {
         uint256 base;
         uint256 premium;
+        uint256 h1fee;
     }
 
     /**

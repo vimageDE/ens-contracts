@@ -42,7 +42,7 @@ contract StaticBulkRenewal is IBulkRenewal {
                 names[i],
                 duration
             );
-            uint256 totalPrice = price.base + price.premium;
+            uint256 totalPrice = price.base + price.premium + price.h1fee;
             controller.renew{value: totalPrice}(names[i], duration);
             unchecked {
                 ++i;

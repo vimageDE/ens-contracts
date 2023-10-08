@@ -13,6 +13,7 @@ const namehash = require('eth-ens-namehash')
 const sha3 = require('web3-utils').sha3
 const toBN = require('web3-utils').toBN
 const { exceptions } = require('../test-utils')
+const { H1NativeApplication_Fee } = require('../test-utils/h1')
 
 const ETH_LABEL = sha3('eth')
 const ETH_NAMEHASH = namehash.hash('eth')
@@ -127,7 +128,7 @@ contract('StaticBulkRenewal', function (accounts) {
   it('should permit bulk renewal of names', async () => {
     const oldExpiry = await baseRegistrar.nameExpires(sha3('test2'))
     const tx = await staticBulkRenewal.renewAll(['test1', 'test2'], 86400, {
-      value: 86401 * 2,
+      value: H1NativeApplication_Fee.add(86401).mul(2),
     })
     assert.equal(tx.receipt.status, true)
     const newExpiry = await baseRegistrar.nameExpires(sha3('test2'))

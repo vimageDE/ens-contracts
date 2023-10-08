@@ -17,10 +17,15 @@ const {
   EMPTY_BYTES32: EMPTY_BYTES,
   EMPTY_ADDRESS: ZERO_ADDRESS,
 } = require('../test-utils/constants')
+const { H1NativeApplication_Fee } = require('../test-utils/h1')
 
 const DAY = 24 * 60 * 60
 const REGISTRATION_TIME = 28 * DAY
-const BUFFERED_REGISTRATION_COST = REGISTRATION_TIME + 3 * DAY
+const REGISTRATION_TIME_AND_FEE = H1NativeApplication_Fee.add(REGISTRATION_TIME)
+const BUFFERED_REGISTRATION_COST_BASIC = REGISTRATION_TIME + 3 * DAY
+const BUFFERED_REGISTRATION_COST = H1NativeApplication_Fee.add(
+  BUFFERED_REGISTRATION_COST_BASIC,
+)
 const GRACE_PERIOD = 90 * DAY
 const NULL_ADDRESS = ZERO_ADDRESS
 contract('ETHRegistrarController', function () {
@@ -212,12 +217,12 @@ contract('ETHRegistrarController', function () {
 
     expect(
       (await web3.eth.getBalance(controller.address)) - balanceBefore,
-    ).to.equal(REGISTRATION_TIME)
+    ).to.equal(REGISTRATION_TIME_AND_FEE)
   })
 
   it('should revert when not enough ether is transferred', async () => {
     await expect(registerName('newname', { value: 0 })).to.be.revertedWith(
-      'InsufficientValue()',
+      'InsufficientFunds',
     )
   })
 
@@ -272,7 +277,7 @@ contract('ETHRegistrarController', function () {
 
     expect(
       (await web3.eth.getBalance(controller.address)) - balanceBefore,
-    ).to.equal(REGISTRATION_TIME)
+    ).to.equal(REGISTRATION_TIME_AND_FEE)
 
     var nodehash = namehash('newconfigname.eth')
     expect(await ens.resolver(nodehash)).to.equal(resolver.address)
@@ -512,7 +517,7 @@ contract('ETHRegistrarController', function () {
     expect(await resolver['addr(bytes32)'](nodehash)).to.equal(NULL_ADDRESS)
     expect(
       (await web3.eth.getBalance(controller.address)) - balanceBefore,
-    ).to.equal(REGISTRATION_TIME)
+    ).to.equal(REGISTRATION_TIME_AND_FEE)
   })
 
   it('should include the owner in the commitment', async () => {
@@ -619,8 +624,13 @@ contract('ETHRegistrarController', function () {
     var expires = await baseRegistrar.nameExpires(sha3('newname'))
     var balanceBefore = await web3.eth.getBalance(controller.address)
     const duration = 86400
-    const [price] = await controller.rentPrice(sha3('newname'), duration)
-    await controller.renew('newname', duration, { value: price })
+    const { base, premium, h1fee } = await controller.rentPrice(
+      sha3('newname'),
+      duration,
+    )
+    await controller.renew('newname', duration, {
+      value: base.add(premium).add(h1fee),
+    })
     var newExpires = await baseRegistrar.nameExpires(sha3('newname'))
     var newFuseExpiry = (await nameWrapper.getData(nodehash))[2]
     expect(newExpires.toNumber() - expires.toNumber()).to.equal(duration)
@@ -628,7 +638,7 @@ contract('ETHRegistrarController', function () {
 
     expect(
       (await web3.eth.getBalance(controller.address)) - balanceBefore,
-    ).to.equal(86400)
+    ).to.equal(H1NativeApplication_Fee.add(86400))
   })
 
   it('should allow token owners to renew a name', async () => {
@@ -642,8 +652,13 @@ contract('ETHRegistrarController', function () {
     var expires = await baseRegistrar.nameExpires(sha3('newname'))
     var balanceBefore = await web3.eth.getBalance(controller.address)
     const duration = 86400
-    const [price] = await controller.rentPrice(sha3('newname'), duration)
-    await controller2.renew('newname', duration, { value: price })
+    const { base, premium, h1fee } = await controller.rentPrice(
+      sha3('newname'),
+      duration,
+    )
+    await controller2.renew('newname', duration, {
+      value: base.add(premium).add(h1fee),
+    })
     var newExpires = await baseRegistrar.nameExpires(sha3('newname'))
     const [, newFuses, newFuseExpiry] = await nameWrapper.getData(nodehash)
     expect(newExpires.toNumber() - expires.toNumber()).to.equal(duration)
@@ -651,7 +666,7 @@ contract('ETHRegistrarController', function () {
     expect(newFuses).to.equal(fuses)
     expect(
       (await web3.eth.getBalance(controller.address)) - balanceBefore,
-    ).to.equal(86400)
+    ).to.equal(H1NativeApplication_Fee.add(86400))
   })
 
   it('non wrapped names can renew', async () => {
@@ -667,8 +682,13 @@ contract('ETHRegistrarController', function () {
 
     var expires = await baseRegistrar.nameExpires(tokenId)
     const duration = 86400
-    const [price] = await controller.rentPrice(tokenId, duration)
-    await controller.renew(label, duration, { value: price })
+    const { base, premium, h1fee } = await controller.rentPrice(
+      tokenId,
+      duration,
+    )
+    await controller.renew(label, duration, {
+      value: base.add(premium).add(h1fee),
+    })
 
     expect(await baseRegistrar.ownerOf(tokenId)).to.equal(ownerAccount)
     expect(await nameWrapper.ownerOf(nodehash)).to.equal(ZERO_ADDRESS)

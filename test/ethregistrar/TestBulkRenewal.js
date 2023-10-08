@@ -6,6 +6,7 @@ const DummyOracle = artifacts.require('./DummyOracle')
 const StablePriceOracle = artifacts.require('./StablePriceOracle')
 const BulkRenewal = artifacts.require('./BulkRenewal')
 const NameWrapper = artifacts.require('./wrapper/NameWrapper.sol')
+const DummyFeeContract = artifacts.require('DummyFeeContract')
 const { deploy } = require('../test-utils/contracts')
 const { EMPTY_BYTES32: EMPTY_BYTES } = require('../test-utils/constants')
 
@@ -13,6 +14,8 @@ const namehash = require('eth-ens-namehash')
 const sha3 = require('web3-utils').sha3
 const toBN = require('web3-utils').toBN
 const { exceptions } = require('../test-utils')
+const { H1NativeApplication_Fee } = require('../test-utils/h1')
+const { BigNumber } = require('ethers')
 
 const ETH_LABEL = sha3('eth')
 const ETH_NAMEHASH = namehash.hash('eth')
@@ -126,8 +129,13 @@ contract('BulkRenewal', function (accounts) {
 
   it('should permit bulk renewal of names', async () => {
     const oldExpiry = await baseRegistrar.nameExpires(sha3('test2'))
+    const amount = 86401 * 2
+    const amountWithFee = BigNumber.from(amount.toString()).add(
+      H1NativeApplication_Fee.mul(5),
+    )
+    console.log('Amount with Fee: ', amountWithFee)
     const tx = await bulkRenewal.renewAll(['test1', 'test2'], 86400, {
-      value: 86401 * 2,
+      value: amountWithFee,
     })
     assert.equal(tx.receipt.status, true)
     const newExpiry = await baseRegistrar.nameExpires(sha3('test2'))

@@ -5,13 +5,14 @@ import "./IPriceOracle.sol";
 import "./StringUtils.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import "../IFeeContract.sol";
 
 interface AggregatorInterface {
     function latestAnswer() external view returns (int256);
 }
 
 // StablePriceOracle sets a price in USD, based on an oracle.
-contract StablePriceOracle is IPriceOracle {
+contract StablePriceOracle is IPriceOracle, IFeeContract {
     using StringUtils for *;
 
     // Rent in base price units by length
@@ -34,6 +35,23 @@ contract StablePriceOracle is IPriceOracle {
         price4Letter = _rentPrices[3];
         price5Letter = _rentPrices[4];
     }
+
+    // This function retrieves the value of H1 in USD.
+    function queryOracle() external view returns (uint256) {
+        return _queryOracle();
+    }
+
+    function _queryOracle() internal pure returns (uint256) {
+        return 0.001 ether;
+    }
+
+    //This function returns a timestamp that will tell the contract when to update the oracle.
+    function nextResetTime() external view returns (uint256) {
+        return (block.timestamp + (60 * 60 * 24));
+    }
+
+    // This function updates the fees in the fee contract to match the oracle values.
+    function updateFee() external {}
 
     function price(
         string calldata name,
@@ -58,7 +76,8 @@ contract StablePriceOracle is IPriceOracle {
         return
             IPriceOracle.Price({
                 base: attoUSDToWei(basePrice),
-                premium: attoUSDToWei(_premium(name, expires, duration))
+                premium: attoUSDToWei(_premium(name, expires, duration)),
+                h1fee: _queryOracle()
             });
     }
 
