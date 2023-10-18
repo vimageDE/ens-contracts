@@ -12,8 +12,9 @@ contract ExponentialPremiumPriceOracle is StablePriceOracle {
         AggregatorInterface _usdOracle,
         uint256[] memory _rentPrices,
         uint256 _startPremium,
-        uint256 totalDays
-    ) StablePriceOracle(_usdOracle, _rentPrices) {
+        uint256 totalDays,
+        address feeContract
+    ) StablePriceOracle(_usdOracle, _rentPrices, feeContract) {
         startPremium = _startPremium;
         endValue = _startPremium >> totalDays;
     }

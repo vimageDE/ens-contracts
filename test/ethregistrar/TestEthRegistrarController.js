@@ -4,6 +4,8 @@ const {
   contracts: { deploy },
   ens: { FUSES },
 } = require('../test-utils')
+const DummyFeeContract = artifacts.require('./DummyFeeContract')
+const toBN = require('web3-utils').toBN
 
 const { CANNOT_UNWRAP, PARENT_CANNOT_CONTROL, IS_DOT_ETH } = FUSES
 
@@ -114,11 +116,13 @@ contract('ETHRegistrarController', function () {
 
     await ens.setSubnodeOwner(EMPTY_BYTES, sha3('eth'), baseRegistrar.address)
 
+    const feeDummy = await DummyFeeContract.new(toBN(1000000000000000))
     const dummyOracle = await deploy('DummyOracle', '100000000')
     priceOracle = await deploy(
       'StablePriceOracle',
       dummyOracle.address,
       [0, 0, 4, 2, 1],
+      feeDummy.address,
     )
     controller = await deploy(
       'ETHRegistrarController',

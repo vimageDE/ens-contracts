@@ -19,8 +19,9 @@ contract LinearPremiumPriceOracle is StablePriceOracle {
         AggregatorInterface _usdOracle,
         uint256[] memory _rentPrices,
         uint256 _initialPremium,
-        uint256 _premiumDecreaseRate
-    ) public StablePriceOracle(_usdOracle, _rentPrices) {
+        uint256 _premiumDecreaseRate,
+        address feeContract
+    ) public StablePriceOracle(_usdOracle, _rentPrices, feeContract) {
         initialPremium = _initialPremium;
         premiumDecreaseRate = _premiumDecreaseRate;
     }

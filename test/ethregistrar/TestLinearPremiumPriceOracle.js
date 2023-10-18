@@ -2,6 +2,7 @@ const ENS = artifacts.require('./registry/ENSRegistry')
 const BaseRegistrar = artifacts.require('./BaseRegistrarImplementation')
 const DummyOracle = artifacts.require('./DummyOracle')
 const LinearPremiumPriceOracle = artifacts.require('./LinearPremiumPriceOracle')
+const DummyFeeContract = artifacts.require('./DummyFeeContract')
 
 const namehash = require('eth-ens-namehash')
 const sha3 = require('web3-utils').sha3
@@ -20,6 +21,7 @@ contract('LinearPremiumPriceOracle', function (accounts) {
 
     // Dummy oracle with 1 ETH == 2 USD
     var dummyOracle = await DummyOracle.new(toBN(200000000))
+    const feeDummy = await DummyFeeContract.new(toBN(1000000000000000))
     // 4 attousd per second for 3 character names, 2 attousd per second for 4 character names,
     // 1 attousd per second for longer names.
     // Pricing premium starts out at 100 USD at expiry and decreases to 0 over 100k seconds (a bit over a day)
@@ -30,6 +32,7 @@ contract('LinearPremiumPriceOracle', function (accounts) {
       [0, 0, 4, 2, 1],
       premium,
       decreaseRate,
+      feeDummy.address,
     )
   })
 

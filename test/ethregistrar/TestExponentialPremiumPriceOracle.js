@@ -9,6 +9,7 @@ const DummyOracle = artifacts.require('./DummyOracle')
 const ExponentialPremiumPriceOracle = artifacts.require(
   './ExponentialPremiumPriceOracle',
 )
+const DummyFeeContract = artifacts.require('./DummyFeeContract')
 
 const START_PRICE = 100000000
 const DAY = 86400
@@ -32,6 +33,8 @@ contract('ExponentialPricePremiumOracle', function (accounts) {
 
     // Dummy oracle with 1 ETH == 2 USD
     var dummyOracle = await DummyOracle.new(toBN(200000000))
+    const feeDummy = await DummyFeeContract.new(toBN(1000000000000000))
+
     // 4 attousd per second for 3 character names, 2 attousd per second for 4 character names,
     // 1 attousd per second for longer names.
     // Pricing premium starts out at 100 USD at expiry and decreases to 0 over 100k seconds (a bit over a day)
@@ -40,6 +43,7 @@ contract('ExponentialPricePremiumOracle', function (accounts) {
       [0, 0, 4, 2, 1],
       BigInt(START_PRICE * 1e18),
       LAST_DAY,
+      feeDummy.address,
     )
   })
 

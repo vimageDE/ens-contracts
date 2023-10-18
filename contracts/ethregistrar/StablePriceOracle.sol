@@ -21,19 +21,25 @@ contract StablePriceOracle is IPriceOracle, IFeeContract {
     uint256 public immutable price3Letter;
     uint256 public immutable price4Letter;
     uint256 public immutable price5Letter;
+    IFeeContract public immutable fee;
 
     // Oracle address
     AggregatorInterface public immutable usdOracle;
 
     event RentPriceChanged(uint256[] prices);
 
-    constructor(AggregatorInterface _usdOracle, uint256[] memory _rentPrices) {
+    constructor(
+        AggregatorInterface _usdOracle,
+        uint256[] memory _rentPrices,
+        address feeContract
+    ) {
         usdOracle = _usdOracle;
         price1Letter = _rentPrices[0];
         price2Letter = _rentPrices[1];
         price3Letter = _rentPrices[2];
         price4Letter = _rentPrices[3];
         price5Letter = _rentPrices[4];
+        fee = IFeeContract(feeContract);
     }
 
     // This function retrieves the value of H1 in USD.
@@ -41,13 +47,13 @@ contract StablePriceOracle is IPriceOracle, IFeeContract {
         return _queryOracle();
     }
 
-    function _queryOracle() internal pure returns (uint256) {
-        return 0.001 ether;
+    function _queryOracle() internal view returns (uint256) {
+        return fee.queryOracle();
     }
 
     //This function returns a timestamp that will tell the contract when to update the oracle.
     function nextResetTime() external view returns (uint256) {
-        return (block.timestamp + (60 * 60 * 24));
+        return fee.nextResetTime();
     }
 
     // This function updates the fees in the fee contract to match the oracle values.
