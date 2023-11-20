@@ -9,7 +9,7 @@ const DummyOracle = artifacts.require('./DummyOracle')
 const ExponentialPremiumPriceOracle = artifacts.require(
   './ExponentialPremiumPriceOracle',
 )
-const DummyFeeContract = artifacts.require('./DummyFeeContract')
+const MockFeeContract = artifacts.require('./MockFeeContract')
 
 const START_PRICE = 100000000
 const DAY = 86400
@@ -33,7 +33,7 @@ contract('ExponentialPricePremiumOracle', function (accounts) {
 
     // Dummy oracle with 1 ETH == 2 USD
     var dummyOracle = await DummyOracle.new(toBN(200000000))
-    const feeDummy = await DummyFeeContract.new(toBN(1000000000000000))
+    const feeDummy = await MockFeeContract.new(toBN(1000000000000000))
 
     // 4 attousd per second for 3 character names, 2 attousd per second for 4 character names,
     // 1 attousd per second for longer names.

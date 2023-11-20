@@ -1,6 +1,6 @@
 const DummyOracle = artifacts.require('./DummyOracle')
 const StablePriceOracle = artifacts.require('./StablePriceOracle')
-const DummyFeeContract = artifacts.require('./DummyFeeContract')
+const MockFeeContract = artifacts.require('./MockFeeContract')
 const toBN = require('web3-utils').toBN
 
 const { expect } = require('chai')
@@ -11,7 +11,7 @@ contract('StablePriceOracle', function (accounts) {
   before(async () => {
     // Dummy oracle with 1 ETH == 10 USD
     var dummyOracle = await DummyOracle.new(1000000000n)
-    const feeDummy = await DummyFeeContract.new(toBN(1000000000000000))
+    const feeDummy = await MockFeeContract.new(toBN(1000000000000000))
 
     // 4 attousd per second for 3 character names, 2 attousd per second for 4 character names,
     // 1 attousd per second for longer names.
@@ -41,7 +41,7 @@ contract('StablePriceOracle', function (accounts) {
     const dummyOracle2 = await DummyOracle.new(1000000000n)
     // 4 attousd per second for 3 character names, 2 attousd per second for 4 character names,
     // 1 attousd per second for longer names.
-    const feeDummy = await DummyFeeContract.new(toBN(1000000000000000))
+    const feeDummy = await MockFeeContract.new(toBN(1000000000000000))
     const priceOracle2 = await StablePriceOracle.new(
       dummyOracle2.address,
       [

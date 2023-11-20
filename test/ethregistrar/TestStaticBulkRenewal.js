@@ -14,7 +14,7 @@ const sha3 = require('web3-utils').sha3
 const toBN = require('web3-utils').toBN
 const { exceptions } = require('../test-utils')
 const { H1NativeApplication_Fee } = require('../test-utils/h1')
-const DummyFeeContract = artifacts.require('./DummyFeeContract')
+const MockFeeContract = artifacts.require('./MockFeeContract')
 
 const ETH_LABEL = sha3('eth')
 const ETH_NAMEHASH = namehash.hash('eth')
@@ -69,7 +69,7 @@ contract('StaticBulkRenewal', function (accounts) {
 
     // Set up a dummy price oracle and a controller
     const dummyOracle = await DummyOracle.new(toBN(100000000))
-    const feeDummy = await DummyFeeContract.new(toBN(1000000000000000))
+    const feeDummy = await MockFeeContract.new(toBN(1000000000000000))
 
     priceOracle = await StablePriceOracle.new(
       dummyOracle.address,
@@ -84,6 +84,7 @@ contract('StaticBulkRenewal', function (accounts) {
       EMPTY_ADDRESS,
       nameWrapper.address,
       ens.address,
+      feeDummy.address,
       { from: ownerAccount },
     )
     await baseRegistrar.addController(controller.address, {

@@ -4,7 +4,7 @@ const {
   contracts: { deploy },
   ens: { FUSES },
 } = require('../test-utils')
-const DummyFeeContract = artifacts.require('./DummyFeeContract')
+const MockFeeContract = artifacts.require('./MockFeeContract')
 const toBN = require('web3-utils').toBN
 
 const { CANNOT_UNWRAP, PARENT_CANNOT_CONTROL, IS_DOT_ETH } = FUSES
@@ -116,7 +116,7 @@ contract('ETHRegistrarController', function () {
 
     await ens.setSubnodeOwner(EMPTY_BYTES, sha3('eth'), baseRegistrar.address)
 
-    const feeDummy = await DummyFeeContract.new(toBN(1000000000000000))
+    const feeDummy = await MockFeeContract.new(toBN(1000000000000000))
     const dummyOracle = await deploy('DummyOracle', '100000000')
     priceOracle = await deploy(
       'StablePriceOracle',
@@ -133,6 +133,7 @@ contract('ETHRegistrarController', function () {
       reverseRegistrar.address,
       nameWrapper.address,
       ens.address,
+      feeDummy.address,
     )
     controller2 = controller.connect(signers[1])
     await nameWrapper.setController(controller.address, true)
@@ -218,10 +219,9 @@ contract('ETHRegistrarController', function () {
         0,
         block.timestamp + REGISTRATION_TIME,
       )
-
     expect(
       (await web3.eth.getBalance(controller.address)) - balanceBefore,
-    ).to.equal(REGISTRATION_TIME_AND_FEE)
+    ).to.equal(REGISTRATION_TIME)
   })
 
   it('should revert when not enough ether is transferred', async () => {
@@ -281,7 +281,7 @@ contract('ETHRegistrarController', function () {
 
     expect(
       (await web3.eth.getBalance(controller.address)) - balanceBefore,
-    ).to.equal(REGISTRATION_TIME_AND_FEE)
+    ).to.equal(REGISTRATION_TIME)
 
     var nodehash = namehash('newconfigname.eth')
     expect(await ens.resolver(nodehash)).to.equal(resolver.address)
@@ -521,7 +521,7 @@ contract('ETHRegistrarController', function () {
     expect(await resolver['addr(bytes32)'](nodehash)).to.equal(NULL_ADDRESS)
     expect(
       (await web3.eth.getBalance(controller.address)) - balanceBefore,
-    ).to.equal(REGISTRATION_TIME_AND_FEE)
+    ).to.equal(REGISTRATION_TIME)
   })
 
   it('should include the owner in the commitment', async () => {
@@ -642,7 +642,7 @@ contract('ETHRegistrarController', function () {
 
     expect(
       (await web3.eth.getBalance(controller.address)) - balanceBefore,
-    ).to.equal(H1NativeApplication_Fee.add(86400))
+    ).to.equal(86400)
   })
 
   it('should allow token owners to renew a name', async () => {
@@ -670,7 +670,7 @@ contract('ETHRegistrarController', function () {
     expect(newFuses).to.equal(fuses)
     expect(
       (await web3.eth.getBalance(controller.address)) - balanceBefore,
-    ).to.equal(H1NativeApplication_Fee.add(86400))
+    ).to.equal(86400)
   })
 
   it('non wrapped names can renew', async () => {

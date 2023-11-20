@@ -6,7 +6,7 @@ const DummyOracle = artifacts.require('./DummyOracle')
 const StablePriceOracle = artifacts.require('./StablePriceOracle')
 const BulkRenewal = artifacts.require('./BulkRenewal')
 const NameWrapper = artifacts.require('./wrapper/NameWrapper.sol')
-const DummyFeeContract = artifacts.require('./DummyFeeContract')
+const MockFeeContract = artifacts.require('./MockFeeContract')
 const { deploy } = require('../test-utils/contracts')
 const { EMPTY_BYTES32: EMPTY_BYTES } = require('../test-utils/constants')
 
@@ -70,7 +70,7 @@ contract('BulkRenewal', function (accounts) {
 
     // Set up a dummy price oracle and a controller
     const dummyOracle = await DummyOracle.new(toBN(100000000))
-    const feeDummy = await DummyFeeContract.new(toBN(1000000000000000))
+    const feeDummy = await MockFeeContract.new(toBN(1000000000000000))
 
     priceOracle = await StablePriceOracle.new(
       dummyOracle.address,
@@ -85,6 +85,7 @@ contract('BulkRenewal', function (accounts) {
       EMPTY_ADDRESS,
       nameWrapper.address,
       ens.address,
+      feeDummy.address,
       { from: ownerAccount },
     )
     var wrapperAddress = await controller.nameWrapper()

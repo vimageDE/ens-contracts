@@ -15,7 +15,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       log: true,
     })
     oracleAddress = dummyOracle.address
-    const dummyFee = await deploy('DummyFeeContract', {
+    const dummyFee = await deploy('MockFeeContract', {
       from: deployer,
       args: ['1000000000000000'],
       log: true,
